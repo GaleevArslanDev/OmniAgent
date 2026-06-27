@@ -6,12 +6,14 @@ from minecraft_client import MinecraftClient
 from prompt import create_prompt
 from tool_registry import ToolRegistry
 from tools.common.done import DoneTool
+from tools.minecraft.move_forward import MoveForwardTool
 from tools.minecraft.observe import ObserveTool
 from tools.minecraft.say import SayTool
 
 registry = ToolRegistry([
     DoneTool(),
     SayTool(),
+    MoveForwardTool(),
 ])
 
 
@@ -72,6 +74,7 @@ def run_agent_loop(client: ClientInterface, goal: str) -> None:
                 "SYSTEM: Ты только что повторил то же самое действие. "
                 "Если цель уже выполнена, используй done."
             )
+            print("Повтор действия")
             continue
 
         last_tool = tool_key
