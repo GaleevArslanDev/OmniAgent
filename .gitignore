@@ -1,0 +1,88 @@
+﻿# ==============================================================================
+# ML / Data Science Specifics
+# ==============================================================================
+# Datasets (Never commit raw, processed, or external data)
+data/
+*.csv
+*.tsv
+*.jsonl
+*.parquet
+*.parquet.gzip
+*.hdf5
+*.h5
+*.npy
+*.npz
+
+# Model checkpoints and weights (Large binaries)
+models/
+checkpoints/
+*.pth
+*.pt
+*.pkl
+*.pickle
+*.joblib
+*.onnx
+*.pb
+*.tflite
+*.ckpt
+*.weights
+
+# Machine Learning Experiment Tracking & Outputs
+mlruns/
+lightning_logs/
+wandb/
+.tensorboard/
+outputs/
+reports/figures/
+
+# ==============================================================================
+# Jupyter Notebooks & Interactive Elements
+# ==============================================================================
+.ipynb_checkpoints
+*/.ipynb_checkpoints/*
+__notebook_profiles__
+
+# ==============================================================================
+# Python Core & Environments
+# ==============================================================================
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Environments
+.venv/
+venv/
+env/
+ENV/
+.env
+.venv*
+conda-env/
+
+# Distribution / packaging
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# ==============================================================================
+# Operating System & IDEs (VS Code, PyCharm)
+# ==============================================================================
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
