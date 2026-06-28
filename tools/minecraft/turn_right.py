@@ -3,6 +3,8 @@ from tool import Tool
 
 
 class TurnRightTool(Tool):
+    enabled = False
+
     name = "turn_right"
     description = "Повернуться вправо на deg градусов."
     args_schema = {
