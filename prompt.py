@@ -1,8 +1,9 @@
 ﻿from action import ActionEntry
 from memory import MemoryEntry
+from world_state import WorldState
 
 
-def create_prompt(goal: str, observations: dict, actions: list[ActionEntry], memory: list[MemoryEntry], tools_description: str) -> str:
+def create_prompt(goal: str, observations: dict, actions: list[ActionEntry], memory: list[MemoryEntry], world_state: WorldState, tools_description: str) -> str:
     return f"""
 Ты — агент Omni, который живёт в Minecraft.
 
@@ -14,6 +15,13 @@ def create_prompt(goal: str, observations: dict, actions: list[ActionEntry], mem
 
 SYSTEM_ACTION_LOG:
 {"\n".join(f"- {entry.to_json()}" for entry in actions) if actions else "История пока пуста."}
+
+World State:
+{world_state.to_json()}
+
+World State — это долговременное состояние известных объектов.
+Если объект отсутствует в текущем наблюдении, но есть в World State со статусом observed, значит агент видел его раньше, но сейчас не наблюдает.
+Если объект имеет status="removed", значит он был удалён/сломался.
 
 Память:
 {"\n".join(f"- {entry.to_json()}" for entry in memory) if memory else "Память пока пуста."}

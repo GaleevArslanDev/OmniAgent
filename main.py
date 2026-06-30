@@ -9,6 +9,7 @@ from memory import MemoryEntry
 from prompt import create_prompt
 from tool_registry import ToolRegistry
 from tools_loader import load_tools
+from world_state import WorldState
 
 registry = ToolRegistry(load_tools())
 
@@ -65,6 +66,8 @@ def run_agent_loop(client: ClientInterface, goal: str) -> None:
     action_log = []
     memory_log = []
 
+    world_state = WorldState()
+
     #last_tool = None
 
     step = 0
@@ -72,12 +75,14 @@ def run_agent_loop(client: ClientInterface, goal: str) -> None:
     while True:
         step += 1
         observations = client.observe()
+        world_state.update_from_observation(observations, step)
         print(observations)
         prompt = create_prompt(
             goal=goal,
             observations=observations,
             actions=action_log,
             memory=memory_log,
+            world_state=world_state,
             tools_description=registry.describe(),
         )
 
@@ -110,16 +115,16 @@ def run_agent_loop(client: ClientInterface, goal: str) -> None:
         obs_after = client.observe()
         diff = diff_observations(observations, obs_after)
 
-        action_log.append(
-            ActionEntry(
-                step=step,
-                tool=tools_use["name"],
-                arguments=tools_use["arguments"],
-                success=success,
-                result=res,
-                observation_diff=diff,
-            )
+        action = ActionEntry(
+            step=step,
+            tool=tools_use["name"],
+            arguments=tools_use["arguments"],
+            success=success,
+            result=res,
+            observation_diff=diff,
         )
+        action_log.append(action)
+        world_state.update_from_action(action)
 
         memory_log.append(
             MemoryEntry(

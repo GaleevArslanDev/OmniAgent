@@ -87,3 +87,4 @@ MANIFEST
 .DS_Store
 Thumbs.db
 log.txt
+*.exe

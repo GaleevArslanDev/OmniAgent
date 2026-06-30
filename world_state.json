@@ -1,0 +1,15 @@
+[
+    {
+        "id": "chest@14,-60,155",
+        "name": "chest",
+        "position": {
+            "x": 14,
+            "y": -60,
+            "z": 155
+        },
+        "status": "observed",
+        "first_seen_step": 1,
+        "last_seen_step": 1,
+        "removed_step": null
+    }
+]
