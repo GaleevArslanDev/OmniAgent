@@ -7,6 +7,8 @@ from llm import call_llm
 from clients.minecraft.client import MinecraftClient
 from memory import MemoryEntry
 from prompt import create_prompt
+from task_plan import parse_task_plan
+from task_progress import TaskProgress
 from tool_registry import ToolRegistry
 from tools_loader import load_tools
 from world_state import WorldState
@@ -68,21 +70,43 @@ def run_agent_loop(client: ClientInterface, goal: str) -> None:
 
     world_state = WorldState()
 
+    task_plan = parse_task_plan(goal)
+    task_progress = TaskProgress(task_plan)
+
+    planned_mode = len(task_plan.steps) > 0
+
+    print("Started with planned mode:", planned_mode)
+
     #last_tool = None
 
     step = 0
 
     while True:
         step += 1
+
         observations = client.observe()
+
         world_state.update_from_observation(observations, step)
+        task_progress.update_from_observation(observations, step)
+
         print(observations)
+        print("TASK_PLAN:", task_plan.to_json())
+        print("TASK_PROGRESS:", task_progress.to_json())
+
+        if planned_mode and task_progress.is_done():
+            print("[TASK_DONE]", task_progress.to_json())
+            if callable(getattr(client, "stop", None)):
+                client.stop()
+            break
+
         prompt = create_prompt(
             goal=goal,
             observations=observations,
             actions=action_log,
             memory=memory_log,
             world_state=world_state,
+            task_plan=task_plan,
+            task_progress=task_progress,
             tools_description=registry.describe(),
         )
 
@@ -124,7 +148,9 @@ def run_agent_loop(client: ClientInterface, goal: str) -> None:
             observation_diff=diff,
         )
         action_log.append(action)
+
         world_state.update_from_action(action)
+        task_progress.update_from_action(action)
 
         memory_log.append(
             MemoryEntry(

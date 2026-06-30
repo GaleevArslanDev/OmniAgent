@@ -1,9 +1,20 @@
 ﻿from action import ActionEntry
 from memory import MemoryEntry
+from task_plan import TaskPlan
+from task_progress import TaskProgress
 from world_state import WorldState
 
 
-def create_prompt(goal: str, observations: dict, actions: list[ActionEntry], memory: list[MemoryEntry], world_state: WorldState, tools_description: str) -> str:
+def create_prompt(
+    goal: str,
+    observations: dict,
+    actions: list[ActionEntry],
+    memory: list[MemoryEntry],
+    world_state: WorldState,
+    task_plan: TaskPlan,
+    task_progress: TaskProgress,
+    tools_description: str
+) -> str:
     return f"""
 Ты — агент Omni, который живёт в Minecraft.
 
@@ -22,6 +33,38 @@ World State:
 World State — это долговременное состояние известных объектов.
 Если объект отсутствует в текущем наблюдении, но есть в World State со статусом observed, значит агент видел его раньше, но сейчас не наблюдает.
 Если объект имеет status="removed", значит он был удалён/сломался.
+
+Task Plan:
+{task_plan.to_json()}
+
+Task Progress:
+{task_progress.to_json()}
+
+Task Plan — это список шагов текущей пользовательской задачи.
+Task Progress — это достоверный прогресс выполнения этих шагов.
+Task Progress обновляется системой из наблюдений и журнала действий.
+Ты не должен выдумывать, что шаг выполнен.
+
+Если Task Progress содержит current_step, выполняй только current_step.
+Не перескакивай через шаги.
+Не повторяй шаги, у которых done=true.
+Если Task Progress all_done=true, используй done.
+
+Правила для current_step:
+
+1. Если current_step.kind == "remember_object_location", значит объект target_name ещё не был найден в наблюдении.
+Скажи, что ты не наблюдаешь target_name рядом.
+
+2. Если current_step.kind == "use_tool":
+   - Вызови ровно тот tool, который указан в current_step.args.tool.
+   - Используй ровно arguments из current_step.args.arguments.
+   - Не меняй secs и другие аргументы без причины.
+
+3. Если current_step.kind == "report_remembered_location":
+   - Используй Task Progress remembered_objects.
+   - Скажи координаты remembered object.
+   - Не используй текущие координаты агента вместо координат объекта.
+   - Если remembered_objects не содержит target_name, скажи, что позиция объекта не была запомнена.
 
 Память:
 {"\n".join(f"- {entry.to_json()}" for entry in memory) if memory else "Память пока пуста."}
