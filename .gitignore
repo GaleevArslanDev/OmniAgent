@@ -90,3 +90,4 @@ log.txt
 *.exe
 world_state.json
 /notes
+/manual_tests

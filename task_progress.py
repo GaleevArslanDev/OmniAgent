@@ -278,14 +278,25 @@ class TaskProgress:
         target_name = current.args["target_name"]
         text = action.arguments.get("text", "").lower()
 
-        last_dig_action = None
-        for step in reversed(self.plan.steps):
-            if step.id == current.id:
-                break
-            if step.kind == "use_tool" and step.args.get("tool") == "dig_block_at_cursor":
-                last_dig_action = step
+        current_index = next(
+            (index for index, step in enumerate(self.plan.steps) if step.id == current.id),
+            None,
+        )
 
-        if last_dig_action is None:
+        if current_index is None:
+            self.mark_failed(
+                current.id,
+                f"report_observation_diff step {current.id} is missing from TaskPlan",
+            )
+            return
+
+        last_dig_step = None
+        for step in reversed(self.plan.steps[:current_index]):
+            if step.kind == "use_tool" and step.args.get("tool") == "dig_block_at_cursor":
+                last_dig_step = step
+                break
+
+        if last_dig_step is None:
             self.mark_failed(
                 current.id,
                 f"report_observation_diff has no preceding dig step for {target_name}",

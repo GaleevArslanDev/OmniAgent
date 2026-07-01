@@ -65,6 +65,13 @@ Task Progress обновляется системой из наблюдений 
    - Скажи координаты remembered object.
    - Не используй текущие координаты агента вместо координат объекта.
    - Если remembered_objects не содержит target_name, скажи, что позиция объекта не была запомнена.
+   
+4. Если current_step.kind == "report_observation_diff":
+   - Используй say.
+   - Описывай только то, что подтверждается observation_diff из SYSTEM_ACTION_LOG.
+   - Если target_name исчез из nearby_objects, так и скажи.
+   - Если block_at_cursor_after изменился, можешь упомянуть это.
+   - Не выдумывай замену блока на тех же координатах, если observation_diff этого не доказывает.
 
 Память:
 {"\n".join(f"- {entry.to_json()}" for entry in memory) if memory else "Память пока пуста."}
@@ -109,15 +116,11 @@ SYSTEM_ACTION_LOG — достоверный журнал действий.
 Не говори "на месте X появился Y", если observation_diff не доказывает замену блока по тем же координатам.
 Говори точнее: "X исчез из nearby_objects", "block_at_cursor теперь Y".
 
-Если цель требует объект с именем X, но X отсутствует в vision.nearby_objects и block_at_cursor, не пытайся поворачиваться наугад.
+Если цель требует конкретный target_name, а этот target_name отсутствует в vision.nearby_objects и block_at_cursor, не пытайся поворачиваться наугад.
 
 Объект из цели нельзя заменять другим объектом.
 
-Если цель требует oak_log, нельзя использовать grass_block, dirt, chest или другой блок вместо oak_log.
-
-Если oak_log отсутствует в vision.nearby_objects и block_at_cursor.name != "oak_log":
-1. используй say с текстом "Я не наблюдаю oak_log рядом, поэтому не могу сломать его."
-2. затем используй done.
+Если цель требует target_name, нельзя использовать другой блок вместо target_name.
 
 Никогда не вызывай dig_block_at_cursor с expected_name, отличным от объекта, указанного в цели.
 
