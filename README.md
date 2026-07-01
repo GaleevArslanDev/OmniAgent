@@ -10,7 +10,7 @@ The project combines:
 
 ## Ecosystem & Companion Apps
 
-- **[Minecraft World Model Viewer](ССЫЛКА_НА_РЕПОЗИТОРИЙ_ВЬЮВЕРА)** — A dedicated Panda3D desktop companion application used to monitor and visualize Omni's live `world_state.json` updates in real-time.
+- **[Minecraft World Model Viewer](https://github.com/GaleevArslanDev/omni-world-state-visualizer)** — A dedicated Panda3D desktop companion application used to monitor and visualize Omni's live `world_state.json` updates in real-time.
 
 ## How It Works
 

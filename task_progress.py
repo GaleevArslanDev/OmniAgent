@@ -142,6 +142,10 @@ class TaskProgress:
             self._update_report_step(current, action)
             return
 
+        if current.kind == "report_observation_diff":
+            self._update_report_observation_diff_step(current, action)
+            return
+
     def _update_remember_step_from_action(self, current: TaskStep, action: ActionEntry) -> None:
         """
         Если current_step = remember_object_location, а агент сказал,
@@ -177,6 +181,9 @@ class TaskProgress:
         expected_tool = current.args["tool"]
         expected_arguments = current.args.get("arguments", {})
 
+        if action.tool != expected_tool:
+            return
+
         if not action.success:
             self.mark_failed(
                 current.id,
@@ -184,14 +191,47 @@ class TaskProgress:
             )
             return
 
-        if action.tool != expected_tool:
-            return
-
         if expected_tool == "move_forward":
             expected_secs = expected_arguments.get("secs")
             actual_secs = action.arguments.get("secs")
 
             if expected_secs is not None and float(actual_secs) != float(expected_secs):
+                return
+
+        if expected_tool == "look_at_nearest":
+            expected_name = expected_arguments.get("block_name")
+            looked_name = (
+                (action.result or {})
+                .get("block_at_cursor_after", {})
+                .get("name")
+            )
+
+            if expected_name is not None and looked_name != expected_name:
+                self.mark_failed(
+                    current.id,
+                    (
+                        f"look_at_nearest pointed at {looked_name!r} instead of "
+                        f"{expected_name!r} on step {action.step}"
+                    ),
+                )
+                return
+
+        if expected_tool == "dig_block_at_cursor":
+            expected_name = expected_arguments.get("expected_name")
+            dug_name = (
+                (action.result or {})
+                .get("dug_block", {})
+                .get("name")
+            )
+
+            if expected_name is not None and dug_name != expected_name:
+                self.mark_failed(
+                    current.id,
+                    (
+                        f"dig_block_at_cursor dug {dug_name!r} instead of "
+                        f"{expected_name!r} on step {action.step}"
+                    ),
+                )
                 return
 
         self.mark_done(
@@ -222,6 +262,55 @@ class TaskProgress:
         self.mark_done(
             current.id,
             f"reported remembered location on step {action.step}: {action.arguments.get('text')}",
+        )
+
+    def _update_report_observation_diff_step(self, current: TaskStep, action: ActionEntry) -> None:
+        if not action.success:
+            self.mark_failed(
+                current.id,
+                f"report observation diff failed on step {action.step}: {action.result}",
+            )
+            return
+
+        if action.tool != "say":
+            return
+
+        target_name = current.args["target_name"]
+        text = action.arguments.get("text", "").lower()
+
+        last_dig_action = None
+        for step in reversed(self.plan.steps):
+            if step.id == current.id:
+                break
+            if step.kind == "use_tool" and step.args.get("tool") == "dig_block_at_cursor":
+                last_dig_action = step
+
+        if last_dig_action is None:
+            self.mark_failed(
+                current.id,
+                f"report_observation_diff has no preceding dig step for {target_name}",
+            )
+            return
+
+        has_target_name = target_name.lower() in text
+        mentions_disappearance = (
+            "исчез" in text
+            or "пропал" in text
+            or "removed" in text
+            or "сломан" in text
+            or "больше нет" in text
+        )
+        mentions_cursor_change = "block_at_cursor" in text
+
+        if not has_target_name:
+            return
+
+        if not mentions_disappearance and not mentions_cursor_change:
+            return
+
+        self.mark_done(
+            current.id,
+            f"reported observation diff on step {action.step}: {action.arguments.get('text')}",
         )
 
     def to_json(self) -> dict[str, Any]:

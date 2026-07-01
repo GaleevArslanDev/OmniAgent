@@ -75,57 +75,85 @@ def extract_seconds(goal: str, default: float = 3.0) -> float:
     return float(value)
 
 
-def parse_task_plan(goal: str) -> TaskPlan:
-    """
-    v0.5 parser.
-
-    Это НЕ универсальный планнер.
-    Это маленький детерминированный распознаватель
-    для текущего класса задач:
-
-    - запомнить объект
-    - выполнить движение
-    - сказать, где был объект
-
-    Если паттерн не распознан, возвращаем пустой план.
-    Тогда LLM работает как раньше.
-    """
+def wants_remember(goal: str) -> bool:
     lower = goal.lower()
-    target_name = resolve_object_name(lower)
 
-    wants_remember = (
+    return (
         "запомни" in lower
         or "запомнить" in lower
         or "помни" in lower
     )
 
-    wants_report = (
+
+def wants_report(goal: str) -> bool:
+    lower = goal.lower()
+
+    return (
         "скажи" in lower
         or "сообщи" in lower
         or "напиши" in lower
     )
 
-    wants_move_forward = (
+
+def wants_move_forward(goal: str) -> bool:
+    lower = goal.lower()
+
+    return (
         "вперёд" in lower
         or "вперед" in lower
         or "пройди" in lower
         or "иди" in lower
     )
 
+
+def wants_dig(goal: str) -> bool:
+    lower = goal.lower()
+
+    return (
+        "сломай" in lower
+        or "сломать" in lower
+        or "добудь" in lower
+        or "добыть" in lower
+        or "разбей" in lower
+        or "вскопать" in lower
+        or "вскопай" in lower
+    )
+
+
+def wants_change_report(goal: str) -> bool:
+    lower = goal.lower()
+
+    return (
+        "что изменилось" in lower
+        or "изменилось" in lower
+        or "скажи" in lower
+        or "сообщи" in lower
+        or "напиши" in lower
+    )
+
+
+def try_parse_remember_move_report(goal: str) -> TaskPlan | None:
+    target_name = resolve_object_name(goal)
+
+    if target_name is None:
+        return None
+
+    if not wants_remember(goal):
+        return None
+
     steps: list[TaskStep] = []
 
-    if wants_remember and target_name is not None:
-        steps.append(
-            TaskStep(
-                id="remember_target_location",
-                kind="remember_object_location",
-                args={
-                    "target_name": target_name,
-                },
-            )
+    steps.append(
+        TaskStep(
+            id="remember_target_location",
+            kind="remember_object_location",
+            args={
+                "target_name": target_name,
+            },
         )
+    )
 
-    if wants_move_forward:
+    if wants_move_forward(goal):
         secs = extract_seconds(goal, default=3.0)
 
         steps.append(
@@ -141,7 +169,7 @@ def parse_task_plan(goal: str) -> TaskPlan:
             )
         )
 
-    if wants_report and target_name is not None:
+    if wants_report(goal):
         steps.append(
             TaskStep(
                 id="report_target_location",
@@ -155,4 +183,88 @@ def parse_task_plan(goal: str) -> TaskPlan:
     return TaskPlan(
         goal=goal,
         steps=steps,
+    )
+
+
+def try_parse_dig_object(goal: str) -> TaskPlan | None:
+    target_name = resolve_object_name(goal)
+
+    if target_name is None:
+        return None
+
+    if not wants_dig(goal):
+        return None
+
+    steps: list[TaskStep] = [
+        TaskStep(
+            id="look_at_target",
+            kind="use_tool",
+            args={
+                "tool": "look_at_nearest",
+                "arguments": {
+                    "block_name": target_name,
+                },
+            },
+        ),
+        TaskStep(
+            id="dig_target",
+            kind="use_tool",
+            args={
+                "tool": "dig_block_at_cursor",
+                "arguments": {
+                    "expected_name": target_name,
+                },
+            },
+        ),
+    ]
+
+    if wants_change_report(goal):
+        steps.append(
+            TaskStep(
+                id="report_change",
+                kind="report_observation_diff",
+                args={
+                    "target_name": target_name,
+                },
+            )
+        )
+
+    return TaskPlan(
+        goal=goal,
+        steps=steps,
+    )
+
+
+def parse_task_plan(goal: str) -> TaskPlan:
+    """
+    v0.6 parser.
+
+    Это НЕ универсальный планнер.
+    Это набор маленьких детерминированных распознавателей известных шаблонов.
+
+    Сейчас поддерживаются:
+
+    1. remember/move/report:
+       "Запомни chest, пройди вперёд 3 секунды, скажи где был chest"
+
+    2. dig/report-diff:
+       "Повернись к oak_log, сломай его, скажи что изменилось"
+
+    Смешанные команды с несколькими разными целями пока лучше не поддерживать.
+    Если паттерн не распознан, возвращаем пустой план.
+    Тогда LLM работает как раньше.
+    """
+    parsers = [
+        try_parse_remember_move_report,
+        try_parse_dig_object,
+    ]
+
+    for parser in parsers:
+        plan = parser(goal)
+        if plan is not None and plan.steps:
+            return plan
+
+    return TaskPlan(
+        goal=goal,
+        steps=[],
     )
