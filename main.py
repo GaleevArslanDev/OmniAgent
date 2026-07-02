@@ -83,6 +83,8 @@ def run_agent_loop(client: ClientInterface, goal: str) -> None:
 
     step = 0
 
+    terminated_normally = False
+
     while step < max_steps:
         step += 1
 
@@ -99,6 +101,7 @@ def run_agent_loop(client: ClientInterface, goal: str) -> None:
             logger.log_message("[TASK_TERMINAL]" + str(task_progress.to_json()))
             if callable(getattr(client, "stop", None)):
                 client.stop()
+            terminated_normally = True
             break
 
         prompt = create_prompt(
@@ -119,6 +122,7 @@ def run_agent_loop(client: ClientInterface, goal: str) -> None:
             logger.log_message("[TASK_TERMINAL] LLM finished execution with done tool")
             if callable(getattr(client, "stop", None)):
                 client.stop()
+                terminated_normally = True
             break
 
         # tool_key = json.dumps(tools_use, ensure_ascii=False, sort_keys=True)
@@ -160,9 +164,12 @@ def run_agent_loop(client: ClientInterface, goal: str) -> None:
                 text=answer["history"],
             )
         )
-    logger.log_warning("Terminated because of the timeout")
-    if callable(getattr(client, "stop", None)):
-        client.stop()
+
+    if not terminated_normally:
+        # Timeout
+        logger.log_warning("Terminated because of the timeout")
+        if callable(getattr(client, "stop", None)):
+            client.stop()
 
 
 if __name__ == "__main__":

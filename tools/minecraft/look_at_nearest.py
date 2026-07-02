@@ -19,7 +19,7 @@ class LookAtNearestTool(Tool):
         if not nearest_block:
             return False, {"error": "no_such_block_in_nearest_objects"}
 
-        x, y, z = nearest_block["x"], nearest_block["y"], nearest_block["z"]
+        x, y, z = nearest_block["x"] + 0.5, nearest_block["y"] + 0.5, nearest_block["z"] + 0.5
 
         before = client.observe()["vision"]["block_at_cursor"]
         success = client.look_at_coords(x, y, z)

@@ -67,11 +67,11 @@ Task Progress обновляется системой из наблюдений 
    - Если remembered_objects не содержит target_name, скажи, что позиция объекта не была запомнена.
    
 4. Если current_step.kind == "report_observation_diff":
-   - Используй say.
-   - Описывай только то, что подтверждается observation_diff из SYSTEM_ACTION_LOG.
-   - Если target_name исчез из nearby_objects, так и скажи.
-   - Если block_at_cursor_after изменился, можешь упомянуть это.
-   - Не выдумывай замену блока на тех же координатах, если observation_diff этого не доказывает.
+    - Вызови ровно tool say.
+    - Не используй никакие инструменты, кроме say на этом шаге.
+    - Сообщи только то, что подтверждается observation_diff.
+    
+Если current_step.kind не use_tool, не вызывай minecraft tool, не соответствующий типу шага
 
 Память:
 {"\n".join(f"- {entry.to_json()}" for entry in memory) if memory else "Память пока пуста."}
