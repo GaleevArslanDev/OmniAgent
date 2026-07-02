@@ -153,13 +153,21 @@ class TaskProgress:
 
         Это важно: иначе он будет бесконечно повторять say.
         """
-        if not action.success:
-            return
+        target_name = current.args["target_name"]
 
         if action.tool != "say":
+            self.mark_failed(
+                current.id,
+                (
+                    f"cannot remember {target_name}: invalid tool {action.tool!r} "
+                    f"used on remember step {action.step}"
+                ),
+            )
             return
 
-        target_name = current.args["target_name"]
+        if not action.success:
+            return
+        
         text = action.arguments.get("text", "").lower()
 
         says_not_observed = (
