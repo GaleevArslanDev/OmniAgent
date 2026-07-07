@@ -25,6 +25,7 @@ class DebugMixin:
         self._debug_stream_height = height
         self._debug_stream_frames = frames
         self._debug_viewer_client = None
+        self._debug_stream_last_error = None
 
     def start_debug_stream(self) -> None:
         if not getattr(self, "_debug_stream_enabled", False):
@@ -34,16 +35,16 @@ class DebugMixin:
 
         try:
             output = f"{self._debug_stream_host}:{self._debug_stream_port}"
+            self._debug_stream_last_error = None
             self._debug_viewer_client = start_filtered_headless(self.bot, {
                 "output": output,
                 "frames": self._debug_stream_frames,
                 "width": self._debug_stream_width,
                 "height": self._debug_stream_height,
             })
-            print(f"[DEBUG_STREAM] streaming to {output}")
         except Exception as error:
             self._debug_viewer_client = None
-            print(f"[DEBUG_STREAM] failed to start: {error}")
+            self._debug_stream_last_error = str(error)
 
     def stop_debug_stream(self) -> None:
         client = getattr(self, "_debug_viewer_client", None)

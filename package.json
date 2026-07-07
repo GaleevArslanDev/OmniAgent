@@ -1,0 +1,8 @@
+{
+  "dependencies": {
+    "canvas": "^3.2.3",
+    "mineflayer": "^4.25.0",
+    "node-canvas-webgl": "^0.3.0",
+    "prismarine-viewer": "^1.33.0"
+  }
+}

@@ -89,9 +89,8 @@ Thumbs.db
 log.txt
 *.exe
 world_state.json
+agent_state.json
 /notes
 /manual_tests
 /node_modules
-package-lock.json
-package.json
 *.log
