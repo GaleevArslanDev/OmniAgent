@@ -123,6 +123,9 @@ def run_agent_loop(client: ClientInterface, goal: str) -> None:
         tools_use = answer["tool_use"]
 
         if tools_use["name"] == "done":
+            print(answer)
+            print(answer["user_answer"])
+
             logger.log_message("[TASK_TERMINAL] LLM finished execution with done tool")
             if callable(getattr(client, "stop", None)):
                 client.stop()

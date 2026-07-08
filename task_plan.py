@@ -235,9 +235,103 @@ def try_parse_dig_object(goal: str) -> TaskPlan | None:
     )
 
 
+def wants_inventory_question(goal: str) -> bool:
+    lower = goal.lower()
+
+    return (
+        "инвентар" in lower
+        or "в руке" in lower
+        or ("у тебя есть" in lower)
+        or ("есть ли у тебя" in lower)
+        or ("сколько у тебя" in lower)
+        or ("выбран" in lower and "слот" in lower)
+    )
+
+
+def try_parse_agent_state_report(goal: str) -> TaskPlan | None:
+    lower = goal.lower()
+
+    asks_self_state = (
+        "здоров" in lower
+        or "health" in lower
+        or "hp" in lower
+        or "сытост" in lower
+        or "food" in lower
+        or "голод" in lower
+        or "координат" in lower
+        or "позици" in lower
+        or "где ты" in lower
+        or "поворот" in lower
+        or "yaw" in lower
+        or "pitch" in lower
+        or ("выбран" in lower and "слот" in lower)
+        or "в руке" in lower
+        or "инвентар" in lower
+        or "у тебя есть" in lower
+        or "есть ли у тебя" in lower
+        or "сколько у тебя" in lower
+    )
+
+    if not asks_self_state:
+        return None
+
+    def make_plan(step_id: str, field: str, item_name: str | None = None) -> TaskPlan:
+        args = {
+            "tool": "report_agent_state",
+            "arguments": {
+                "field": field,
+            },
+        }
+        if item_name is not None:
+            args["arguments"]["item_name"] = item_name
+
+        return TaskPlan(
+            goal=goal,
+            steps=[
+                TaskStep(
+                    id=step_id,
+                    kind="use_tool",
+                    args=args,
+                )
+            ],
+        )
+
+    if "здоров" in lower or "health" in lower or "hp" in lower:
+        return make_plan("report_health", "health")
+
+    if "сытост" in lower or "food" in lower or "голод" in lower:
+        return make_plan("report_food", "food")
+
+    if "где ты" in lower or "координат" in lower or "позици" in lower:
+        return make_plan("report_position", "position")
+
+    if "поворот" in lower or "yaw" in lower or "pitch" in lower:
+        return make_plan("report_rotation", "rotation")
+
+    if "в руке" in lower:
+        return make_plan("report_main_hand", "main_hand")
+
+    if "выбран" in lower and "слот" in lower:
+        return make_plan("report_selected_slot", "selected_slot")
+
+    if "что у тебя в инвентаре" in lower or "что в инвентаре" in lower:
+        return make_plan("report_inventory_summary", "inventory_summary")
+
+    item_name = resolve_object_name(goal)
+
+    if item_name is not None:
+        if "сколько у тебя" in lower or ("сколько" in lower and "в инвентаре" in lower):
+            return make_plan("report_inventory_count_item", "inventory_count_item", item_name)
+
+        if "у тебя есть" in lower or "есть ли у тебя" in lower:
+            return make_plan("report_inventory_has_item", "inventory_has_item", item_name)
+
+    return None
+
+
 def parse_task_plan(goal: str) -> TaskPlan:
     """
-    v0.6 parser.
+    v0.7 parser.
 
     Это НЕ универсальный планнер.
     Это набор маленьких детерминированных распознавателей известных шаблонов.
@@ -255,6 +349,7 @@ def parse_task_plan(goal: str) -> TaskPlan:
     Тогда LLM работает как раньше.
     """
     parsers = [
+        try_parse_agent_state_report,
         try_parse_remember_move_report,
         try_parse_dig_object,
     ]

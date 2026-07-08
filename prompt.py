@@ -52,6 +52,10 @@ Agent State — это достоверное состояние самого а
 - содержимое инвентаря
 - наличие или количество предмета в инвентаре
 
+Фраза "у тебя есть X" означает, что X принадлежит агенту, то есть находится у него в инвентаре или в руке.
+Фраза "у тебя есть X" никогда не должна определяться по nearby_objects, World State или remembered_objects.
+Если рядом в мире есть X, но в Agent State его нет, отвечай, что у агента этого нет.
+
 Если вопрос касается самого агента, сначала смотри в Agent State.
 Если Agent State не подтверждает факт, не выдумывай его.
 
@@ -104,6 +108,8 @@ Task Progress обновляется системой из наблюдений 
    - Вызови ровно тот tool, который указан в current_step.args.tool.
    - Используй ровно arguments из current_step.args.arguments.
    - Не меняй secs и другие аргументы без причины.
+   - Если current_step.args.tool == "report_agent_state", не вычисляй значения сам.
+   - В этом случае просто вызови report_agent_state с указанными arguments как есть.
 
 3. Если current_step.kind == "report_remembered_location":
    - Используй Task Progress remembered_objects.
@@ -114,7 +120,12 @@ Task Progress обновляется системой из наблюдений 
 4. Если current_step.kind == "report_observation_diff":
     - Вызови ровно tool say.
     - Не используй никакие инструменты, кроме say на этом шаге.
-    - Сообщи только то, что подтверждается observation_diff.
+    - Сообщи только то, что буквально подтверждается observation_diff.
+    - Нельзя утверждать, что один блок появился "на месте" другого, если это не доказано системой по тем же координатам.
+    - Безопасные формулировки:
+      * "{{target_name}} исчез из nearby_objects"
+      * "block_at_cursor теперь {{block_name}}"
+    - Избегай формулировок вида "на месте X теперь Y".
     
 Если current_step.kind не use_tool, не вызывай minecraft tool, не соответствующий типу шага
 
@@ -158,8 +169,10 @@ SYSTEM_ACTION_LOG — достоверный журнал действий.
 
 При описании изменений используй observation_diff
 
-Не говори "на месте X появился Y", если observation_diff не доказывает замену блока по тем же координатам.
-Говори точнее: "X исчез из nearby_objects", "block_at_cursor теперь Y".
+Не говори "на месте X появился Y", если observation_diff не доказывает замену по тем же координатам.
+Для report_observation_diff предпочитай буквальные формулировки:
+- "X исчез из nearby_objects"
+- "block_at_cursor теперь Y"
 
 Если цель требует конкретный target_name, а этот target_name отсутствует в vision.nearby_objects и block_at_cursor, не пытайся поворачиваться наугад.
 
