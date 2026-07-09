@@ -87,7 +87,7 @@ MANIFEST
 .DS_Store
 Thumbs.db
 log.txt
-*.exe
+OmniWorldStateViewer.exe
 world_state.json
 agent_state.json
 /notes
