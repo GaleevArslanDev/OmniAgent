@@ -4,6 +4,7 @@ from omni.clients.interface import ClientInterface
 from omni.clients.minecraft.chat import ChatMixin
 from omni.clients.minecraft.debug import DebugMixin
 from omni.clients.minecraft.interaction import InteractionMixin
+from omni.clients.minecraft.inventory import InventoryMixin
 from omni.clients.minecraft.movement import MovementMixin
 from omni.clients.minecraft.observation import ObservationMixin
 from omni.clients.minecraft.rotation import RotationMixin
@@ -31,6 +32,7 @@ class MinecraftClient(
     ChatMixin,
     InteractionMixin,
     DebugMixin,
+    InventoryMixin,
     ClientInterface,
 ):
     def __init__(

@@ -65,3 +65,5 @@ BLOCK_AT_CURSOR_MAX_DISTANCE = 8
 DIG_BLOCK_MAX_DISTANCE = 4.5
 # Max time to wait for Mineflayer digging callbacks.
 DIG_TIMEOUT_SECONDS = 10
+# Max time to wait for Mineflayer changing slot callbacks.
+SLOT_SWITCH_TIMEOUT_SECONDS = 2.0

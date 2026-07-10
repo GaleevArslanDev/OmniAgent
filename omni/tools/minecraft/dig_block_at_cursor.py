@@ -2,7 +2,7 @@
 from omni.tools.base import Tool
 
 
-class DigBlockAtCursor(Tool):
+class DigBlockAtCursorTool(Tool):
     name = "dig_block_at_cursor"
     description = "Добыть блок, расположенный в направлении взгляда. Можно указать expected_name, чтобы не сломать не тот блок."
     args_schema = {
